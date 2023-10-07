@@ -16,7 +16,7 @@ jobs:
         python-version: '3.x' # Version range or exact version of a Python version to use, using SemVer's version range syntax
     - name: Send to TG
       run: |
-        pip install requests
+        pip install requests beautifulsoup4
         python3 main.py
       env:
         TOKEN: ${{ secrets.TOKEN }}

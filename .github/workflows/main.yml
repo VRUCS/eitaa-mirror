@@ -20,7 +20,7 @@ jobs:
         python3 main.py
       env:
         TOKEN: ${{ secrets.TOKEN }}
-        TOKEN: ${{ secrets.CHANNEL }}
+        CHANNEL: ${{ secrets.CHANNEL }}
 
     - name: commit files
       run: |

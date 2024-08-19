@@ -31,6 +31,7 @@ def send_to_telegram(message, video_url=None, image_url=None):
             "video": video_url
         }
         response_video = requests.post(url_video, data=payload)
+        print(f"Video send response: {response_video.json()}")  # Print the response
         return response_video.status_code == 200  # Return True if the video was sent successfully
 
     # If image_url is provided, send the image with the caption
@@ -47,6 +48,7 @@ def send_to_telegram(message, video_url=None, image_url=None):
             response_photo = requests.post(url_photo, data={"chat_id": TELEGRAM_CHANNEL, "caption": message, "parse_mode": "HTML"}, files={"photo": img_file})
 
         os.remove("temp_img.jpg")
+        print(f"Photo send response: {response_photo.json()}")  # Print the response
         return response_photo.status_code == 200  # Return True if the photo was sent successfully
 
     # If no image or video is provided, just send the message
@@ -58,6 +60,7 @@ def send_to_telegram(message, video_url=None, image_url=None):
             "parse_mode": "HTML"
         }
         response_message = requests.post(url_message, data=payload)
+        print(f"Message send response: {response_message.json()}")  # Print the response
         return response_message.status_code == 200  # Return True if the message was sent successfully
 
 def main():
@@ -73,14 +76,10 @@ def main():
         
         if last_message_id is None or message_id > last_message_id:
             message_text_div = message.find("div", class_="etme_widget_message_text")
-            if message_text_div is not None:
-                message_text = message_text_div.text
-            else:
-                print(f"Message {message_id} has no text. Skipping...")
-                continue  # Skip this message if there's no text
+            message_text = message_text_div.text if message_text_div else ""
             
             message_image = message.find("a", class_="etme_widget_message_photo_wrap")
-            # use regex to find the image url
+
             if message_image:
                 url_match = re.search(r"url$'([^']+)'$", message_image.get("style"))
                 if url_match:
@@ -90,20 +89,20 @@ def main():
             else:
                 message_image = None
             
-            # Extract video URL
             video_link = message.find("video")
-            if video_link:
-                video_url = "https://eitaa.com" + video_link["src"].split("?")[0]  # Get the base URL without token
-            else:
-                video_url = None
+            video_url = "https://eitaa.com" + video_link["src"].split("?")[0] if video_link else None
 
-            # Send video if available, otherwise send image or text
+
             if video_url and send_to_telegram(message_text, video_url=video_url):
                 print(f"Sent video {message_id} to Telegram.")
             elif message_image and send_to_telegram(message_text, image_url=message_image):
                 print(f"Sent message {message_id} with image to Telegram.")
             else:
-                print(f"Failed to send message {message_id} to Telegram.")
+                if message_text:
+                    send_to_telegram(message_text)
+                    print(f"Sent text message for {message_id} to Telegram.")
+                else:
+                    print(f"Failed to send message {message_id} to Telegram.")
         else:
             print(f"Message {message_id} is not new. Skipping...")
 
